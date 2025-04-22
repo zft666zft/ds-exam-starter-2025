@@ -17,4 +17,3 @@ The app's infrastructure includes some lambdas, queues, a table, a topis, and a 
 
 Examine all aspects of the codebase before the exam, but do not change it until the exam begins. When you have fully understood the app, you may destroy the stack. However, redeploy the app again the day before the exam and leave it deployed.
 
-zft
