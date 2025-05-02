@@ -41,6 +41,8 @@ export class ExamStack extends cdk.Stack {
       },
     });
 
+    table.grantReadData(question1Fn);
+
     new custom.AwsCustomResource(this, "moviesddbInitData", {
       onCreate: {
         service: "DynamoDB",
@@ -71,6 +73,21 @@ export class ExamStack extends cdk.Stack {
     });
 
     const anEndpoint = api.root.addResource("patha");
+
+    const crew = api.root.addResource("crew");
+    const movies = crew.addResource("movies");
+    const movieId = movies.addResource("{movieId}");
+
+    movieId.addMethod(
+      "GET",
+      new apig.LambdaIntegration(question1Fn, { proxy: true }),
+      {
+        requestParameters: {
+          "method.request.querystring.role": true,
+        },
+      }
+    );
+
 
 
     // ==================================
