@@ -11,9 +11,12 @@ export const handler: Handler = async (event) => {
     const bucket = record.s3.bucket.name;
     const key = record.s3.object.key;
 
+    const country = key.includes("Ireland") ? "Ireland" : key.includes("China") ? "China" : "Other";
+
     const message = {
       bucket,
       key,
+      country, 
       timestamp: new Date().toISOString(),
     };
 
@@ -21,6 +24,12 @@ export const handler: Handler = async (event) => {
       new PublishCommand({
         TopicArn: process.env.TOPIC_ARN,
         Message: JSON.stringify(message),
+        MessageAttributes: {
+          country: {
+            DataType: "String",
+            StringValue: country,
+          },
+        },
       })
     );
 

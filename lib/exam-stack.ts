@@ -138,8 +138,31 @@ export class ExamStack extends cdk.Stack {
       new s3n.LambdaDestination(lambdaXFn)
     );
 
-    topic1.addSubscription(new subs.SqsSubscription(queueA));
-    topic1.addSubscription(new subs.SqsSubscription(queueB));
+    topic1.addSubscription(
+      new subs.SqsSubscription(queueA, {
+        filterPolicy: {
+          "address.country": sns.SubscriptionFilter.stringFilter({
+            allowlist: ["Ireland", "China"],
+          }),
+        },
+      })
+    );
+    
+
+    topic1.addSubscription(
+      new subs.SqsSubscription(queueB, {
+        filterPolicy: {
+          "address.country": sns.SubscriptionFilter.stringFilter({
+            denylist: ["Ireland", "China"],
+          }),
+        },
+      })
+    );
+
+    topic1.addSubscription(new subs.EmailSubscription("20108799@mail.wit.ie"));
+
+    
+    
 
     lambdaYFn.addEventSource(new events.SqsEventSource(queueA));
     lambdaYFn.addEventSource(new events.SqsEventSource(queueB));
@@ -151,4 +174,3 @@ export class ExamStack extends cdk.Stack {
     
   }
 }
-  
