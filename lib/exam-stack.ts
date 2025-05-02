@@ -141,7 +141,7 @@ export class ExamStack extends cdk.Stack {
     topic1.addSubscription(
       new subs.SqsSubscription(queueA, {
         filterPolicy: {
-          "address.country": sns.SubscriptionFilter.stringFilter({
+          country: sns.SubscriptionFilter.stringFilter({
             allowlist: ["Ireland", "China"],
           }),
         },
@@ -152,9 +152,10 @@ export class ExamStack extends cdk.Stack {
     topic1.addSubscription(
       new subs.SqsSubscription(queueB, {
         filterPolicy: {
-          "address.country": sns.SubscriptionFilter.stringFilter({
+          country: sns.SubscriptionFilter.stringFilter({
             denylist: ["Ireland", "China"],
           }),
+          email: sns.SubscriptionFilter.existsFilter(), 
         },
       })
     );
