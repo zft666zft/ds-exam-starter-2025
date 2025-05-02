@@ -132,6 +132,22 @@ export class ExamStack extends cdk.Stack {
         REGION: "eu-west-1",
       },
     });
+
+    bucket.addEventNotification(
+      s3.EventType.OBJECT_CREATED_PUT,
+      new s3n.LambdaDestination(lambdaXFn)
+    );
+
+    topic1.addSubscription(new subs.SqsSubscription(queueA));
+    topic1.addSubscription(new subs.SqsSubscription(queueB));
+
+    lambdaYFn.addEventSource(new events.SqsEventSource(queueA));
+    lambdaYFn.addEventSource(new events.SqsEventSource(queueB));
+
+    topic1.grantPublish(lambdaXFn);
+
+    lambdaXFn.addEnvironment("TOPIC_ARN", topic1.topicArn);
+
     
   }
 }
