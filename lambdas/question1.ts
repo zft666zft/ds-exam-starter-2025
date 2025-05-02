@@ -1,6 +1,10 @@
 import { APIGatewayProxyHandlerV2 } from "aws-lambda";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, GetCommand } from "@aws-sdk/lib-dynamodb";
+import {
+  DynamoDBDocumentClient,
+  GetCommand,
+  QueryCommand,
+} from "@aws-sdk/lib-dynamodb";
 
 const client = createDDbDocClient();
 
@@ -11,37 +15,55 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
     const movieId = Number(event.pathParameters?.movieId);
     const role = event.queryStringParameters?.role;
 
-    if (!movieId || !role) {
+    if (!movieId) {
       return {
         statusCode: 400,
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ message: "Missing movieId or role" }),
+        body: JSON.stringify({ message: "Missing movieId" }),
       };
     }
 
-    const command = new GetCommand({
-      TableName: process.env.TABLE_NAME,
-      Key: {
-        movieId,
-        role,
-      },
-    });
+    if (role) {
+      const command = new GetCommand({
+        TableName: process.env.TABLE_NAME,
+        Key: {
+          movieId,
+          role,
+        },
+      });
 
-    const result = await client.send(command);
+      const result = await client.send(command);
 
-    if (!result.Item) {
+      if (!result.Item) {
+        return {
+          statusCode: 404,
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ message: "Crew member not found" }),
+        };
+      }
+
       return {
-        statusCode: 404,
+        statusCode: 200,
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ message: "Crew member not found" }),
+        body: JSON.stringify(result.Item),
+      };
+    } else {
+      const query = new QueryCommand({
+        TableName: process.env.TABLE_NAME,
+        KeyConditionExpression: "movieId = :id",
+        ExpressionAttributeValues: {
+          ":id": movieId,
+        },
+      });
+
+      const result = await client.send(query);
+
+      return {
+        statusCode: 200,
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(result.Items || []),
       };
     }
-
-    return {
-      statusCode: 200,
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(result.Item),
-    };
   } catch (error: any) {
     console.log(JSON.stringify(error));
     return {
@@ -60,5 +82,8 @@ function createDDbDocClient() {
     convertClassInstanceToMap: true,
   };
   const unmarshallOptions = { wrapNumbers: false };
-  return DynamoDBDocumentClient.from(ddbClient, { marshallOptions, unmarshallOptions });
+  return DynamoDBDocumentClient.from(ddbClient, {
+    marshallOptions,
+    unmarshallOptions,
+  });
 }
